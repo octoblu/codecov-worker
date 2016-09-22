@@ -3,12 +3,19 @@ dashdash      = require 'dashdash'
 Redis         = require 'ioredis'
 RedisNS       = require '@octoblu/redis-ns'
 Worker        = require './src/worker'
+mongojs       = require 'mongojs'
 
 packageJSON = require './package.json'
 
 OPTIONS = [
   {
-    names: ['redis-uri', 'u']
+    names: ['mongodb-uri', 'm']
+    type: 'string'
+    env: 'MONGODB_URI'
+    help: 'MongoDB URI'
+  },
+  {
+    names: ['redis-uri', 'r']
     type: 'string'
     env: 'REDIS_URI'
     help: 'Redis URI'
@@ -48,7 +55,13 @@ OPTIONS = [
 class Command
   constructor: ->
     process.on 'uncaughtException', @die
-    {@redis_uri, @redis_namespace, @queue_timeout, @queue_name} = @parseOptions()
+    {
+      @mongodb_uri
+      @redis_uri
+      @redis_namespace
+      @queue_timeout
+      @queue_name
+    } = @parseOptions()
 
   parseOptions: =>
     parser = dashdash.createParser({options: OPTIONS})
@@ -62,9 +75,10 @@ class Command
       console.log packageJSON.version
       process.exit 0
 
-    unless options.redis_uri? && options.redis_namespace? && options.queue_name? && options.queue_timeout?
+    unless options.mongodb_uri? && options.redis_uri? && options.redis_namespace? && options.queue_name? && options.queue_timeout?
       console.error "usage: codecov-worker [OPTIONS]\noptions:\n#{parser.help({includeEnv: true})}"
-      console.error chalk.red 'Missing required parameter --redis-uri, -u, or env: REDIS_URI' unless options.redis_uri?
+      console.error chalk.red 'Missing required parameter --mongodb-uri, -m, or env: MONGODB_URI' unless options.mongodb_uri?
+      console.error chalk.red 'Missing required parameter --redis-uri, -r, or env: REDIS_URI' unless options.redis_uri?
       console.error chalk.red 'Missing required parameter --redis-namespace, -n, or env: REDIS_NAMESPACE' unless options.redis_namespace?
       console.error chalk.red 'Missing required parameter --queue-timeout, -t, or env: QUEUE_TIMEOUT' unless options.queue_timeout?
       console.error chalk.red 'Missing required parameter --queue-name, -u, or env: QUEUE_NAME' unless options.queue_name?
@@ -73,11 +87,12 @@ class Command
     return options
 
   run: =>
+    db = mongojs @mongodb_uri, ['metrics']
     client = new Redis @redis_uri, dropBufferSupport: true
     redis = new RedisNS @redis_namespace, client
 
     client.on 'ready', =>
-      worker = new Worker { redis, queueName: @queue_name, queueTimeout: @queue_timeout }
+      worker = new Worker { db, redis, queueName: @queue_name, queueTimeout: @queue_timeout }
       worker.run()
 
       process.on 'SIGINT', =>
