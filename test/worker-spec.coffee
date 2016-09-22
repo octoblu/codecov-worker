@@ -58,11 +58,12 @@ describe 'Worker', ->
           owner_name: 'octoblu'
           repo_name: 'othing'
           body:
-            passes: 1
-            pending: 1
-            failures: 1
-            tests: 3
-            duration: 55
+            stats:
+              passes: 1
+              pending: 1
+              failures: 1
+              tests: 3
+              duration: 55
 
         record = JSON.stringify data
         @redis.lpush 'work', record, done
