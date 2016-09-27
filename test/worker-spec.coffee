@@ -87,10 +87,10 @@ describe 'Worker', ->
           expect(metric).to.containSubset expectedMetric
           done()
 
-    context 'codecov.io', ->
+    context 'codecov-io', ->
       beforeEach (done) ->
         data =
-          type: 'codecov.io'
+          type: 'codecov-io'
           owner_name: 'octoblu'
           repo_name: 'wathing'
           body:

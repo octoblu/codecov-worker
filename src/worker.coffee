@@ -15,7 +15,7 @@ class Worker
     @handlers =
       'github:issue': new GithubIssueHandler
       'mocha:json': new MochaJsonHandler
-      'codecov.io': new CodecovIOHandler
+      'codecov-io': new CodecovIOHandler
 
   do: (callback) =>
     @redis.brpop @queueName, @queueTimeout, (error, result) =>
@@ -28,7 +28,10 @@ class Worker
       catch error
         return callback error
 
-      @_process data, callback
+      @_process data, (error) =>
+        console.log error.stack if error?
+        callback()
+
     return # avoid returning promise
 
   run: =>
@@ -64,11 +67,10 @@ class Worker
       return callback()
 
     handler.do { owner_name, repo_name, body }, (error, metric) =>
-      console.error error.stack if error?
       return callback error if error?
       { owner_name, repo_name } = metric
       dasherized_type = type.replace '.', '-'
-      metric.updated_at = "#{dasherized_type}": new Date
+      metric["updated_at.#{dasherized_type}"] = new Date
 
       @datastore.update { owner_name, repo_name }, { $set: metric }, { upsert: true }, (error) =>
         return callback error if error?
