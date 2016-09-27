@@ -66,6 +66,8 @@ class Worker
     handler.do { owner_name, repo_name, body }, (error, metric) =>
       return callback error if error?
       { owner_name, repo_name } = metric
+      dasherized_type = type.replace '.', '-'
+      metric.updated_at = "#{dasherized_type}": new Date
 
       @datastore.update { owner_name, repo_name }, metric, {upsert: true}, (error) =>
         return callback error if error?
