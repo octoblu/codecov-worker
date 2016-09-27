@@ -69,7 +69,7 @@ class Worker
       dasherized_type = type.replace '.', '-'
       metric.updated_at = "#{dasherized_type}": new Date
 
-      @datastore.update { owner_name, repo_name }, metric, {upsert: true}, (error) =>
+      @datastore.update { owner_name, repo_name }, { $set: metric }, { upsert: true }, (error) =>
         return callback error if error?
         callback null, data
 
