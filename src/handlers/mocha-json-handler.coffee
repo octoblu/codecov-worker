@@ -1,7 +1,11 @@
 class MochaJsonHandler
   do: ({ owner_name, repo_name, body }, callback) =>
-    { stats } = body
-    { tests, passes, failures, pending, duration } = stats
+    try
+      { stats } = body
+      { tests, passes, failures, pending, duration } = stats
+    catch error
+      return callback error
+
     metric = {
       owner_name
       repo_name

@@ -64,6 +64,7 @@ class Worker
       return callback()
 
     handler.do { owner_name, repo_name, body }, (error, metric) =>
+      console.error error.stack if error?
       return callback error if error?
       { owner_name, repo_name } = metric
       dasherized_type = type.replace '.', '-'

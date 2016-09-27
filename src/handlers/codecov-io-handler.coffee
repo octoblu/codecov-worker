@@ -1,7 +1,10 @@
 class CodecovIOError
   do: ({ body }, callback) =>
-    { owner, repo, head } = body
-    { totals } = head
+    try
+      { owner, repo, head } = body
+      { totals } = head
+    catch error
+      return callback error
 
     owner_name             = owner.username
     repo_name              = repo.name
