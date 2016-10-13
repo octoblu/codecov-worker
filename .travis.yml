@@ -2,8 +2,8 @@ language: node_js
 node_js:
   - '5'
 services:
-- mongodb
-- redis
+  - mongodb
+  - redis
 branches:
   only:
     - '/^v[0-9]/'
@@ -13,5 +13,5 @@ after_success:
   - 'bash <(curl -s https://codecov.io/bash)'
   - 'bash <(curl -s https://codecov.octoblu.com/bash)'
 notifications:
-  webhooks: >-
-    https://sqrtofsaturn:57be102bf79af666ccbf7fd1@deploy-state.octoblu.com/deployments/travis-ci/org
+  webhooks:
+    - 'https://beekeeper.octoblu.com/webhooks/travis:ci'
