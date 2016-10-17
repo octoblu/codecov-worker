@@ -2,6 +2,7 @@ FROM node:5
 MAINTAINER Octoblu, Inc. <docker@octoblu.com>
 
 ENV NPM_CONFIG_LOGLEVEL error
+HEALTHCHECK CMD node healthcheck.js || exit 1
 
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app

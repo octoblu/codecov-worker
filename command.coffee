@@ -4,6 +4,8 @@ Redis         = require 'ioredis'
 RedisNS       = require '@octoblu/redis-ns'
 Worker        = require './src/worker'
 mongojs       = require 'mongojs'
+net           = require 'net'
+fs            = require 'fs'
 
 packageJSON = require './package.json'
 
@@ -91,6 +93,8 @@ class Command
     db = mongojs @mongodb_uri, ['metrics']
     client = new Redis @redis_uri, dropBufferSupport: true
     redis = new RedisNS @redis_namespace, client
+    db.on 'error', @panic
+    client.on 'error', @panic
 
     client.on 'ready', =>
       worker = new Worker { db, redis, queueName: @queue_name, queueTimeout: @queue_timeout }
@@ -107,6 +111,27 @@ class Command
         worker.stop (error) =>
           return @panic error if error?
           process.exit 0
+
+      @healthchecker()
+
+  healthcheck: (callback) =>
+    callback()
+
+  healthchecker: =>
+    fs.unlink './worker.sock', =>
+      server = net.createServer (connection) =>
+        connection.on 'data', (data) =>
+          command = data.toString()
+          if command != 'HEALTHCHECK'
+            return connection.write "ERROR"
+          @healthcheck (error) =>
+            return connection.write "FAIL" if error?
+            connection.write "OK"
+
+      server.listen './worker.sock'
+
+  panic: (error) =>
+    @die error
 
   die: (error) =>
     return process.exit(0) unless error?
